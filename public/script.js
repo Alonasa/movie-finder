@@ -29,42 +29,46 @@ const getMovieOptions = async (method) => {
     }
 }
 
-const getGenres = async () => {
-    const genreRequestEndpoint = "genre/movie/list";
-    const requestParams = "?language=en";
 
-    const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-    let options = await getMovieOptions('GET');
-
+const baseRequest = async (urlToFetch, options)=> {
     try {
         let result = await fetch(urlToFetch, options);
         if (result.ok) {
             const jsonResponse = await result.json();
-            const genres = jsonResponse.genres;
-            console.log(genres)
-            return genres
+            return jsonResponse.genres
         } else {
             console.log('Something wrong')
         }
     } catch (error) {
         console.log(error);
     }
+}
+
+const getGenres = async () => {
+    const genreRequestEndpoint = "genre/movie/list";
+    const requestParams = "?language=en";
+    const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
+    let options = await getMovieOptions('GET');
+    return await baseRequest(urlToFetch, options)
 };
 
-const getMovies = () => {
+const getMovies = async () => {
     const selectedGenre = helpers.getSelectedGenre();
     console.log(selectedGenre)
 
-    // const genreRequestEndpoint = "discover/movie";
-    // const requestParams = `?language=en&page=1&with_genres=28`;
-
-    // const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-    // let options = getMovieOptions('GET');
+    const genreRequestEndpoint = "discover/movie";
+    let options = await getMovieOptions('GET');
 
     const playBtn = document.getElementById("playBtn");
-    // playBtn.onclick = console.log(selectedGenre)
-
+    if (selectedGenre){
+        const requestParams = `?language=en&page=1&with_genres=${selectedGenre}`;
+        const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
+        console.log(urlToFetch)
+        return await baseRequest(urlToFetch,options)
+    }
 };
+
+await getMovies()
 
 
 const getMovieInfo = () => {
