@@ -95,3 +95,22 @@ select {
     background-color: #c74a4a;
     color: #910000;
 }
+
+#spinner {
+    display: none;
+    border: 4px solid #c74a4a;
+    border-left-color: #ffffff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    top: 50vh;
+    left: 48vw;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); } /* Start from 0 degrees */
+    to { transform: rotate(360deg); }
+}

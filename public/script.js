@@ -20,7 +20,7 @@ const tmdbKey = async () => {
 }
 
 const getMovieOptions = async (method) => {
-    let key = await tmdbKey();
+    const key = await tmdbKey();
     return {
         method: method,
         headers: {
@@ -33,7 +33,7 @@ const getMovieOptions = async (method) => {
 
 const baseRequest = async (urlToFetch, options) => {
     try {
-        let result = await fetch(urlToFetch, options);
+        const result = await fetch(urlToFetch, options);
         if (result.ok) {
             const jsonResponse = await result.json();
             return jsonResponse
@@ -45,22 +45,21 @@ const baseRequest = async (urlToFetch, options) => {
     }
 }
 
+const spinner = document.getElementById("spinner");
 const getGenres = async () => {
     const genreRequestEndpoint = "genre/movie/list";
     const requestParams = "?language=en";
     const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-    let options = await getMovieOptions('GET');
-    let genres = await baseRequest(urlToFetch, options);
+    const options = await getMovieOptions('GET');
+    const genres = await baseRequest(urlToFetch, options);
     return genres.genres
 };
 
 const getMovies = async () => {
     const selectedGenre = helpers.getSelectedGenre();
-
     const genreRequestEndpoint = "discover/movie";
-    let options = await getMovieOptions('GET');
+    const options = await getMovieOptions('GET');
 
-    const playBtn = document.getElementById("playBtn");
     if (selectedGenre) {
         const requestParams = `?language=en&page=1&with_genres=${selectedGenre}`;
         const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
@@ -70,7 +69,7 @@ const getMovies = async () => {
 
 
 const getMovieInfo = async (movie) => {
-    let options = await getMovieOptions('GET');
+    const options = await getMovieOptions('GET');
     const movieId = movie.id;
     const movieEndpoint = `movie/${movieId}`;
     const urlToFetch = tmdbBaseUrl + movieEndpoint;
@@ -90,6 +89,16 @@ export const showRandomMovie = async () => {
     displayMovie(info)
 };
 
-getGenres().then(populateGenreDropdown);
+
+const waitForContent = async ()=> {
+    spinner.style.display = "block";
+    const genres = await getGenres();
+    if (genres){
+        populateGenreDropdown(genres)
+    }
+    spinner.style.display = "none";
+}
+
+waitForContent().then()
+
 playBtn.onclick = showRandomMovie;
-// playBtn.onclick = getMovies
