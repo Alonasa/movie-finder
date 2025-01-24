@@ -1,104 +1,96 @@
-import * as helpers from './helpers.js'
-import {clearCurrentMovie, displayMovie, getRandomMovie, populateGenreDropdown} from "./helpers.js";
+import * as helpers from './helpers.js';
+import { clearCurrentMovie, displayMovie, getRandomMovie, populateGenreDropdown } from "./helpers.js";
 
 const tmdbBaseUrl = "https://api.themoviedb.org/3/";
 const playBtn = document.getElementById("playBtn");
+const spinner = document.getElementById("spinner");
 
-const tmdbKey = async () => {
+// Function to fetch the TMDB API key
+const fetchTmdbKey = async () => {
     try {
-        const res = await fetch("https://alona.pythonanywhere.com/key", {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await res.json();
-        return data.key
+        const response = await fetch("https://alona.pythonanywhere.com/key");
+        const data = await response.json();
+        return data.key;
     } catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
+        console.error('Error fetching TMDB key:', error);
     }
-}
+};
 
-const getMovieOptions = async (method) => {
-    const key = await tmdbKey();
+// Function to create request options for TMDB API calls
+const createRequestOptions = async (method) => {
+    const key = await fetchTmdbKey();
     return {
         method: method,
         headers: {
             accept: "application/json",
             Authorization: `Bearer ${key}`,
         },
-    }
-}
-
-
-const baseRequest = async (urlToFetch, options) => {
-    try {
-        const result = await fetch(urlToFetch, options);
-        if (result.ok) {
-            const jsonResponse = await result.json();
-            return jsonResponse
-        } else {
-            console.log('Something wrong');
-        }
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-const spinner = document.getElementById("spinner");
-const getGenres = async () => {
-    const genreRequestEndpoint = "genre/movie/list";
-    const requestParams = "?language=en";
-    const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-    const options = await getMovieOptions('GET');
-    const genres = await baseRequest(urlToFetch, options);
-    return genres.genres
+    };
 };
 
+// Function for making API requests
+const baseRequest = async (url, options) => {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
+// Function to fetch genres from TMDB
+const getGenres = async () => {
+    const genreRequestEndpoint = "genre/movie/list";
+    const urlToFetch = `${tmdbBaseUrl}${genreRequestEndpoint}?language=en`;
+    const options = await createRequestOptions('GET');
+    const { genres } = await baseRequest(urlToFetch, options);
+    return genres;
+};
+
+// Function to fetch movies by selected genre
 const getMovies = async () => {
     const selectedGenre = helpers.getSelectedGenre();
     const genreRequestEndpoint = "discover/movie";
-    const options = await getMovieOptions('GET');
+    const options = await createRequestOptions('GET');
 
     if (selectedGenre) {
-        const requestParams = `?language=en&page=1&with_genres=${selectedGenre}`;
-        const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-        return await baseRequest(urlToFetch, options)
+        const urlToFetch = `${tmdbBaseUrl}${genreRequestEndpoint}?language=en&page=1&with_genres=${selectedGenre}`;
+        return await baseRequest(urlToFetch, options);
     }
 };
 
-
+// Function to fetch movie details by movie object
 const getMovieInfo = async (movie) => {
-    const options = await getMovieOptions('GET');
-    const movieId = movie.id;
-    const movieEndpoint = `movie/${movieId}`;
-    const urlToFetch = tmdbBaseUrl + movieEndpoint;
-    return await baseRequest(urlToFetch, options)
+    const options = await createRequestOptions('GET');
+    const urlToFetch = `${tmdbBaseUrl}movie/${movie.id}`;
+    return await baseRequest(urlToFetch, options);
 };
 
-
-// Gets a list of movies and ultimately displays the info of a random movie from the list
+// Function to show a random movie
 export const showRandomMovie = async () => {
     const movieInfo = document.getElementById("movieInfo");
-    if (movieInfo.childNodes.length > 0) {
-        clearCurrentMovie();
-    }
+    if (movieInfo.childNodes.length > 0) clearCurrentMovie();
+
     const movies = await getMovies();
     const randomMovie = getRandomMovie(movies);
     const info = await getMovieInfo(randomMovie);
-    displayMovie(info)
+    displayMovie(info);
 };
 
-
-const waitForContent = async ()=> {
+// Function to wait for content and manage spinner visibility
+const waitForContent = async () => {
     spinner.style.display = "block";
     const genres = await getGenres();
-    if (genres){
-        populateGenreDropdown(genres)
-    }
+    if (genres) populateGenreDropdown(genres);
     spinner.style.display = "none";
-}
+};
 
-waitForContent().then()
+// Initialize the content and set up event listeners
+const init = async () => {
+    await waitForContent();
+    playBtn.onclick = showRandomMovie;
+};
 
-playBtn.onclick = showRandomMovie;
+// Start the application
+init().then();
