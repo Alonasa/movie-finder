@@ -1,4 +1,3 @@
-
 // Populate dropdown menu with all the available genres
 export const populateGenreDropdown = (genres) => {
     const select = document.getElementById('genres')
@@ -13,8 +12,7 @@ export const populateGenreDropdown = (genres) => {
 
 // Returns the current genre selection from the dropdown menu
 export const getSelectedGenre = () => {
-    const selectedGenre = document.getElementById('genres').value;
-    return selectedGenre;
+    return document.getElementById('genres').value;
 };
 
 // Displays the like and dislike buttons on the page
@@ -32,15 +30,18 @@ export const clearCurrentMovie = () => {
 }
 
 // After liking a movie, clears the current movie from the screen and gets another random movie
-export const likeMovie = () => {
+const likeMovie = async() => {
+    const {showRandomMovie} = await import("./script.js");
+
     clearCurrentMovie();
-    showRandomMovie();
+    await showRandomMovie();
 };
 
 // After disliking a movie, clears the current movie from the screen and gets another random movie
-const dislikeMovie = () => {
+const dislikeMovie = async() => {
+    const {showRandomMovie} = await import("./script.js");
     clearCurrentMovie();
-    showRandomMovie();
+    await showRandomMovie();
 };
 
 // Create HTML for movie poster
@@ -73,14 +74,13 @@ const createMovieOverview = (overview) => {
 };
 
 // Returns a random movie from the first page of movies
-const getRandomMovie = (movies) => {
-    const randomIndex = Math.floor(Math.random() * movies.length);
-    const randomMovie = movies[randomIndex];
-    return randomMovie;
+export const getRandomMovie = (movies) => {
+    const randomIndex = Math.floor(Math.random() * movies.results.length);
+    return movies.results[randomIndex];
 };
 
 // Uses the DOM to create HTML to display the movie
-const displayMovie = (movieInfo) => {
+export const displayMovie = (movieInfo) => {
     const moviePosterDiv = document.getElementById('moviePoster');
     const movieTextDiv = document.getElementById('movieText');
     const likeBtn = document.getElementById('likeBtn');

@@ -1,9 +1,10 @@
 import * as helpers from './helpers.js'
+import {clearCurrentMovie, displayMovie, getRandomMovie, populateGenreDropdown} from "./helpers.js";
 
 const tmdbBaseUrl = "https://api.themoviedb.org/3/";
 const playBtn = document.getElementById("playBtn");
 
-const tmdbKey = async() => {
+const tmdbKey = async () => {
     try {
         const res = await fetch("https://alona.pythonanywhere.com/key", {
             method: 'GET',
@@ -13,7 +14,7 @@ const tmdbKey = async() => {
         });
         const data = await res.json();
         return data.key
-    }catch (error) {
+    } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
     }
 }
@@ -30,14 +31,14 @@ const getMovieOptions = async (method) => {
 }
 
 
-const baseRequest = async (urlToFetch, options)=> {
+const baseRequest = async (urlToFetch, options) => {
     try {
         let result = await fetch(urlToFetch, options);
         if (result.ok) {
             const jsonResponse = await result.json();
-            return jsonResponse.genres
+            return jsonResponse
         } else {
-            console.log('Something wrong')
+            console.log('Something wrong');
         }
     } catch (error) {
         console.log(error);
@@ -49,39 +50,46 @@ const getGenres = async () => {
     const requestParams = "?language=en";
     const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
     let options = await getMovieOptions('GET');
-    return await baseRequest(urlToFetch, options)
+    let genres = await baseRequest(urlToFetch, options);
+    return genres.genres
 };
 
 const getMovies = async () => {
     const selectedGenre = helpers.getSelectedGenre();
-    console.log(selectedGenre)
 
     const genreRequestEndpoint = "discover/movie";
     let options = await getMovieOptions('GET');
 
     const playBtn = document.getElementById("playBtn");
-    if (selectedGenre){
+    if (selectedGenre) {
         const requestParams = `?language=en&page=1&with_genres=${selectedGenre}`;
         const urlToFetch = tmdbBaseUrl + genreRequestEndpoint + requestParams;
-        console.log(urlToFetch)
-        return await baseRequest(urlToFetch,options)
+        return await baseRequest(urlToFetch, options)
     }
 };
 
-await getMovies()
 
-
-const getMovieInfo = () => {
+const getMovieInfo = async (movie) => {
+    let options = await getMovieOptions('GET');
+    const movieId = movie.id;
+    const movieEndpoint = `movie/${movieId}`;
+    const urlToFetch = tmdbBaseUrl + movieEndpoint;
+    return await baseRequest(urlToFetch, options)
 };
+
 
 // Gets a list of movies and ultimately displays the info of a random movie from the list
-const showRandomMovie = () => {
+export const showRandomMovie = async () => {
     const movieInfo = document.getElementById("movieInfo");
     if (movieInfo.childNodes.length > 0) {
-        helpers.clearCurrentMovie();
+        clearCurrentMovie();
     }
+    const movies = await getMovies();
+    const randomMovie = getRandomMovie(movies);
+    const info = await getMovieInfo(randomMovie);
+    displayMovie(info)
 };
 
-getGenres().then(helpers.populateGenreDropdown);
-// playBtn.onclick = helpers.showRandomMovie;
-playBtn.onclick = getMovies
+getGenres().then(populateGenreDropdown);
+playBtn.onclick = showRandomMovie;
+// playBtn.onclick = getMovies
